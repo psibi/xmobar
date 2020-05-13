@@ -38,9 +38,6 @@ data Tick = Tick (TMVar ()) | UnCoalesce
 
 data Period = Period { rate :: Int64, next :: Int64, tick :: TMVar Tick }
 
-data UnCoalesceException = UnCoalesceException deriving Show
-instance Exception UnCoalesceException
-
 {-# NOINLINE periodsVar #-}
 periodsVar :: TVar (Maybe Periods)
 periodsVar = unsafePerformIO $ newTVarIO Nothing
@@ -66,8 +63,9 @@ newPeriod r = do
 -- falls back to periodic sleep.
 doEveryTenthSeconds :: Int -> IO () -> IO ()
 doEveryTenthSeconds r action =
-    doEveryTenthSecondsCoalesced r action `catch` \UnCoalesceException ->
-        doEveryTenthSecondsSleeping r action
+    doEveryTenthSecondsCoalesced r action
+
+data WaitResult = ARDone (TMVar ()) | Done
 
 -- | Perform a given action every N tenths of a second,
 -- coalesce with other timers using a given Timer instance.
@@ -76,17 +74,29 @@ doEveryTenthSecondsCoalesced r action = do
     (u, p) <- newPeriod (fromIntegral r)
     bracket_ (push u p) (pop u) $ forever $ bracket (wait p) done $ const action
     where
-        push u p = atomically $ modifyTVar' periodsVar $ \case
-            Just periods -> Just $ M.insert u p periods
-            Nothing -> throw UnCoalesceException
+        push :: Unique -> Period -> IO ()
+        push u p = do
+          result <- atomically $ stateTVar periodsVar $ \case
+                      Just periods -> let val = Just $ M.insert u p periods
+                                      in (val, val)
+                      Nothing -> (Nothing, Nothing)
+          case result of
+            Nothing -> doEveryTenthSecondsSleeping r action
+            Just _ -> return ()
+
+        pop :: Unique -> IO ()
         pop u = atomically $ modifyTVar' periodsVar $ \case
             Just periods -> Just $ M.delete u periods
             Nothing -> Nothing
 
+        wait :: Period -> IO WaitResult
         wait p = atomically (takeTMVar $ tick p) >>= \case
-            Tick doneVar -> return doneVar
-            UnCoalesce -> throwIO UnCoalesceException
-        done doneVar = atomically $ putTMVar doneVar ()
+            Tick doneVar -> pure $ ARDone doneVar
+            UnCoalesce -> doEveryTenthSecondsSleeping r action >> pure Done
+
+        done :: WaitResult -> IO ()
+        done Done = pure ()
+        done (ARDone doneVar) = atomically $ putTMVar doneVar ()
 
 -- | Perform a given action every N tenths of a second,
 -- making no attempt to synchronize with other timers.
