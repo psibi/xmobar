@@ -20,7 +20,7 @@ module Xmobar.Run.Command where
 import Control.Exception (handle, SomeException(..))
 import System.Process
 import System.Exit
-import System.IO (hClose, hGetLine)
+import System.IO (hClose, hGetLine, hPrint, stderr)
 
 import Xmobar.Run.Exec
 
@@ -44,11 +44,9 @@ instance Exec Command where
               exec = do
                 (i,o,e,p) <- runInteractiveProcess prog args Nothing Nothing
                 exit <- waitForProcess p
+                let errorMessage = "xmobar: Exec exited " <> show exit
+                hPrint stderr errorMessage                                   
                 let closeHandles = hClose o >> hClose i >> hClose e
-                    getL = handle (\(SomeException _) -> return "")
-                                  (hGetLine o)
                 case exit of
-                  ExitSuccess -> do str <- getL
-                                    closeHandles
-                                    cb str
+                  ExitSuccess -> closeHandles
                   _ -> closeHandles >> cb msg
