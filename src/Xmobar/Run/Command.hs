@@ -42,6 +42,7 @@ instance Exec Command where
     start (ComX prog args msg _ r) cb = if r > 0 then go else exec
         where go = doEveryTenthSeconds r exec
               exec = do
+                hPrint stderr ("xmobar: Starting " <> prog <> show args)
                 (i,o,e,p) <- runInteractiveProcess prog args Nothing Nothing
                 exit <- waitForProcess p
                 let errorMessage = "xmobar: Exec exited " <> show exit

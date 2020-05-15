@@ -25,12 +25,19 @@ import System.IO
 import Xmobar.Run.Exec
 import Xmobar.X11.Actions (stripActions)
 import Xmobar.System.Utils (onSomeException)
+import Control.Concurrent (threadDelay)
 
 data StdinReader = StdinReader | UnsafeStdinReader
   deriving (Read, Show)
 
 instance Exec StdinReader where
   start stdinReader cb = do
+    eof <- isEOF
+    if eof
+       then do
+         hPrint stderr $ "xmobar: eof at an early stage"
+         threadDelay (3 * 10^6)
+       else return ()
     s <-
       getLine `onSomeException`
       (\e -> do
