@@ -36,7 +36,7 @@ instance Exec StdinReader where
     if eof
        then do
          hPrint stderr $ "xmobar: eof at an early stage"
-         threadDelay (3 * 10^6)
+         exitImmediately ExitSuccess                
        else return ()
     s <-
       getLine `onSomeException`
