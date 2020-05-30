@@ -191,5 +191,4 @@ startTop a r cb = do
   c <- getCurrentTime
   tref <- newIORef ([], c)
   let scale = fromIntegral cr / 100
-  _ <- topProcesses tref scale
   runM a topConfig (runTop tref scale) r cb
