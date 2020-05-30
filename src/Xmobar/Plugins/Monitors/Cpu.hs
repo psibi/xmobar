@@ -16,7 +16,7 @@
 module Xmobar.Plugins.Monitors.Cpu (startCpu) where
 
 import Xmobar.Plugins.Monitors.Common
-import qualified Data.ByteString.Lazy.Char8 as B
+import qualified Data.ByteString.Char8 as B
 import Data.IORef (IORef, newIORef, readIORef, writeIORef)
 import System.Console.GetOpt
 
@@ -78,5 +78,4 @@ runCpu cref argv =
 startCpu :: [String] -> Int -> (String -> IO ()) -> IO ()
 startCpu a r cb = do
   cref <- newIORef []
-  _ <- parseCpu cref
   runM a cpuConfig (runCpu cref) r cb
