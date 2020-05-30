@@ -5,6 +5,8 @@ _New features_
   - New plugin `HandleReader` for reading data from a Haskell `Handle`. This is
     useful if you are running xmobar from within a Haskell program.
   - Build with ghc 8.10 allowed.
+  - Optimize Weather plugin by using global Manager instead of
+    creating for each http request.
 
 ## Version 0.33 (February, 2020)
 
