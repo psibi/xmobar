@@ -25,6 +25,7 @@ module Xmobar.Plugins.Monitors.Common.Parsers ( runP
                                               , parseTemplate
                                               , parseTemplate'
                                               , parseOptsWith
+                                              , templateParser
                                               ) where
 
 import Xmobar.Plugins.Monitors.Common.Types
@@ -33,6 +34,7 @@ import Control.Applicative ((<$>))
 import qualified Data.Map as Map
 import System.Console.GetOpt (ArgOrder(Permute), OptDescr, getOpt)
 import Text.ParserCombinators.Parsec
+import System.IO
 
 runP :: Parser [a] -> String -> IO [a]
 runP p i =
@@ -133,6 +135,9 @@ parseTemplate l =
        let (n, s') = if w > 0 && length s > w
                      then trimTo (w - length ell) "" s
                      else (1, s)
+       io $ hPutStrLn stderr (show e)
+       io $ hPutStrLn stderr (show t)
+       io $ hPutStrLn stderr "parseTemplate"
        return $ if n > 0 then s' else s' ++ ell
 
 -- | Parses the template given to it with a map of export values and combines
@@ -140,6 +145,8 @@ parseTemplate l =
 parseTemplate' :: String -> Map.Map String String -> Monitor String
 parseTemplate' t m =
     do s <- io $ runP templateParser t
+       io $ hPutStrLn stderr (show s)
+       io $ hPutStrLn stderr ("parseToo")
        combine m s
 
 -- | Given a finite "Map" and a parsed template t produces the
