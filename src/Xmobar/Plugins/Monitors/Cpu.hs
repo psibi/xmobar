@@ -73,7 +73,7 @@ formatCpu opts xs = do
   -- v <- showVerticalBar (100 * t) t
   -- d <- showIconPattern (loadIconPattern opts) t
   ps <- showPercentsWithColors [t]
-  return ps
+  return $ replicate 8 (head ps)
 
 runCpu :: CpuDataRef -> [String] -> Monitor String
 runCpu cref argv =
