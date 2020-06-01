@@ -45,6 +45,7 @@ import Xmobar.App.EventLoop (startLoop, startCommand, newRefreshLock, refreshLoc
 import Xmobar.App.Compile (recompile, trace)
 import Xmobar.App.Config
 import Xmobar.App.Timer (withTimer)
+import System.IO
 
 xmobar :: Config -> IO ()
 xmobar conf = withDeferSignals $ do
@@ -56,6 +57,7 @@ xmobar conf = withDeferSignals $ do
                 (splitTemplate (alignSep conf) (template conf))
   sig   <- setupSignalHandler
   refLock <- newRefreshLock
+  hPutStrLn stderr (show cls)
   withTimer (refreshLock refLock) $
     bracket (mapM (mapM $ startCommand sig) cls)
             cleanupThreads
