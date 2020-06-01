@@ -97,11 +97,12 @@ startLoop xcfg@(XConf _ _ w _ _ _ _) sig pauser vs = do
     xftInitFtLibrary
 #endif
     tv <- atomically $ newTVar []
-    _ <- forkIO (handle (handler "checker") (checker tv [] vs sig pauser))
 #ifdef THREADED_RUNTIME
-    _ <- forkOS (handle (handler "eventer") (eventer sig))
-#else
+    _ <- forkIO (handle (handler "checker") (checker tv [] vs sig pauser))
     _ <- forkIO (handle (handler "eventer") (eventer sig))
+#else
+    _ <- forkOS (handle (handler "checker") (checker tv [] vs sig pauser))
+    _ <- forkOS (handle (handler "eventer") (eventer sig))
 #endif
 #ifdef DBUS
     runIPC sig
@@ -245,9 +246,7 @@ startCommand sig (com,s,ss)
     | otherwise = do var <- atomically $ newTVar is
                      let cb str = atomically $ writeTVar var (s ++ str ++ ss)
                      a1 <- async $ start com cb
-                     a2 <- async $ trigger com $ maybe (return ())
-                                                 (atomically . putTMVar sig)
-                     return ([a1, a2], var)
+                     return ([a1], var)
     where is = s ++ "Updating..." ++ ss
 
 updateString :: Config -> TVar [String]
