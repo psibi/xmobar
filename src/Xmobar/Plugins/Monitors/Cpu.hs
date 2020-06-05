@@ -82,9 +82,9 @@ runCpu cref argv p =
        cpuValue <- parseCpu cref
        hPutStrLn stderr "Inside run cpu2"
        -- t <- getConfigValue template
-       opts <- parseOptsWith options defaultOpts argv
+       -- opts <- parseOptsWith options defaultOpts argv
        hPutStrLn stderr "Inside run cpu3"
-       l <- formatCpu opts cpuValue p
+       l <- formatCpu defaultOpts cpuValue p -- todo fix me
        hPutStrLn stderr "Inside run cpu4"
        -- io $ hPutStrLn stderr (show cpuValue)
        -- io $ hPutStrLn stderr (show l)
