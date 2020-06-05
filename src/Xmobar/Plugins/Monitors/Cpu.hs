@@ -110,7 +110,9 @@ runCpu cref argv p =
 getArguments :: [String] -> IO (CpuDataRef, PureConfig, [String])
 getArguments arguments = do
   cref <- newIORef []
+  hPutStrLn stderr "getARgumens"
   pureConfig <- computeTemplate arguments cpuConfig
+  hPutStrLn stderr "getARgumens 2"
   pure (cref, pureConfig, arguments)
 
 startCpu :: Int -> (CpuDataRef, PureConfig, [String]) -> (String -> IO ()) -> IO ()
