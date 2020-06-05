@@ -80,12 +80,16 @@ runCpu :: CpuDataRef -> [String] -> PureConfig -> IO String
 runCpu cref argv p =
     do hPutStrLn stderr "Inside run cpu"
        cpuValue <- parseCpu cref
+       hPutStrLn stderr "Inside run cpu2"
        -- t <- getConfigValue template
        opts <- parseOptsWith options defaultOpts argv
+       hPutStrLn stderr "Inside run cpu3"
        l <- formatCpu opts cpuValue p
+       hPutStrLn stderr "Inside run cpu4"
        -- io $ hPutStrLn stderr (show cpuValue)
        -- io $ hPutStrLn stderr (show l)
        str <- minParseTemplate p l
+       hPutStrLn stderr "Inside run cpu5"
        hPutStrLn stderr (show str)
        pure str
 
