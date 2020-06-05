@@ -22,6 +22,7 @@ module Xmobar.Plugins.Monitors.Common.Run ( runM
                                           , runML
                                           , runMLD
                                           , getArgvs
+                                          , computeTemplate
                                           ) where
 
 import Control.Exception (SomeException,handle)
@@ -137,5 +138,57 @@ runMLD args conf action looper detect cb = handle (cb . showException) loop
   where ac = doArgs args action detect
         loop = looper $ conf >>= runReaderT ac >>= cb
 
+-- runSimple :: [String] -> IO MConfig -> ([String] -> Monitor String)
+--        -> (IO () -> IO ()) -> ([String] -> Monitor Bool) -> (String -> IO ())
+--        -> IO ()
+-- runSimple args conf action looper detect cb = handle (cb . showException) loop
+--   where ac = doArgs args action detect
+--         loop = looper $ conf >>= runReaderT ac >>= cb
+-- ac = doArgs args action detect
+  -- mconfig <- conf
+  -- undefined
+  -- let configuration = getConfig mconfig
+  -- handle (cb . showException) loop
+  -- where 
+  --   newOpts :: Monitor ()
+  --   newOpts = case getOpt Permute options args of
+  --               (o,_,[]) -> doConfigOptions o
+  --               _ -> return ()
+  --   getConfig :: MConfig -> IO ()
+  --   getConfig = runReaderT newOpts
+  --   loop = looper $ configuration >>= cb
+
+updateOptions :: [String] -> Monitor ()
+updateOptions args= case getOpt Permute options args of
+                      (o, _, []) -> doConfigOptions o
+                      _ -> return ()
+
+getMConfig :: [String] -> IO MConfig -> IO MConfig
+getMConfig args mconfig = do
+  config <- mconfig
+  runReaderT (updateOptions args >> ask) config
+
+computeTemplate :: [String] -> IO MConfig -> IO PureConfig
+computeTemplate args mconfig = do
+  newConfig <- getMConfig args mconfig
+  getPureConfig newConfig
+
+-- -runMLD args conf action looper detect cb = handle (cb . showException) loop
+-- -  where ac = doArgs args action detect
+-- -        loop = looper $ conf >>= runReaderT ac >>= cb
+                           
 showException :: SomeException -> String
 showException = ("error: "++) . show . flip asTypeOf undefined
+
+-- doArgs :: [String]
+--        -> ([String] -> Monitor String)
+--        -> ([String] -> Monitor Bool)
+--        -> Monitor String
+-- doArgs args action detect =
+--     case getOpt Permute options args of
+--       (o, n, [])   -> do doConfigOptions o
+--                          ready <- detect n
+--                          if ready
+--                             then action n
+--                             else return "<Waiting...>"
+--       (_, _, errs) -> return (concat errs)

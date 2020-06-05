@@ -13,7 +13,7 @@
 --
 -----------------------------------------------------------------------------
 
-module Xmobar.Plugins.Monitors.Cpu (startCpu) where
+module Xmobar.Plugins.Monitors.Cpu (startCpu, getArguments) where
 
 import Xmobar.Plugins.Monitors.Common
 import qualified Data.ByteString.Char8 as B
@@ -22,6 +22,7 @@ import System.Console.GetOpt
 import Control.Monad.Reader
 import System.IO
 import Xmobar.Plugins.Monitors.Common.Parsers
+import Xmobar.App.Timer
 
 newtype CpuOpts = CpuOpts
   { loadIconPattern :: Maybe IconPattern
@@ -65,52 +66,50 @@ parseCpu cref =
            percent = map ((/ tot) . fromIntegral) dif
        return percent
 
-formatCpu :: CpuOpts -> [Float] -> Monitor [String]
-formatCpu _ [] = return $ replicate 8 ""
-formatCpu opts xs = do
+formatCpu :: CpuOpts -> [Float] -> PureConfig -> IO [String]
+formatCpu _ [] _ = return $ replicate 8 ""
+formatCpu opts xs p = do
   let t = sum $ take 3 xs
   -- b <- showPercentBar (100 * t) t
   -- v <- showVerticalBar (100 * t) t
   -- d <- showIconPattern (loadIconPattern opts) t
-  ps <- showPercentsWithColors [t]
+  ps <- pShowPercentsWithColors p [t]
   return $ replicate 8 (head ps)
 
-runCpu :: CpuDataRef -> [String] -> Monitor String
-runCpu cref argv =
-    do cpuValue <- io (parseCpu cref)
-       t <- getConfigValue template
-       opts <- io $ parseOptsWith options defaultOpts argv
-       -- io $ hPutStrLn stderr "debug"
-       -- io $ hPutStrLn stderr (show argv)
-       l <- formatCpu opts cpuValue
+runCpu :: CpuDataRef -> [String] -> PureConfig -> IO String
+runCpu cref argv p =
+    do cpuValue <- parseCpu cref
+       -- t <- getConfigValue template
+       opts <- parseOptsWith options defaultOpts argv
+       l <- formatCpu opts cpuValue p
        -- io $ hPutStrLn stderr (show cpuValue)
        -- io $ hPutStrLn stderr (show l)
-       parseTemplate l
+       minParseTemplate p l
 
-getTemplate :: Monitor [String]
-getTemplate = do
-  t <- getConfigValue template
-  v <- io $ runP templateParser t
-  pure $ map mid v
+-- getTemplate :: Monitor [String]
+-- getTemplate = do
+--   t <- getConfigValue template
+--   v <- io $ runP templateParser t
+--   pure $ map mid v
 
-mid :: (a,b,c) -> b
-mid (_,b,_) = b
+-- mid :: (a,b,c) -> b
+-- mid (_,b,_) = b
 
-test :: [String] -> IO [String]
-test arguments = do
-  config <- cpuConfig
-  runReaderT getTemplate config
+-- test :: [String] -> IO [String]
+-- test arguments = do
+--   config <- cpuConfig
+--   runReaderT getTemplate config
 
-helperTemplate :: [String] -> [String]
-helperTemplate arguments = case getOpt Permute [] arguments of
-                             (_,n,_) -> n
+-- helperTemplate :: [String] -> [String]
+-- helperTemplate arguments = case getOpt Permute [] arguments of
+--                              (_,n,_) -> n
 
-startCpu :: [String] -> Int -> (String -> IO ()) -> IO ()
-startCpu arguments refreshRate cb = do
+getArguments :: [String] -> IO (CpuDataRef, PureConfig, [String])
+getArguments arguments = do
   cref <- newIORef []
-  -- goo <- test arguments
-  -- hPutStrLn stderr ("startCPU")  
-  -- hPutStrLn stderr (show arguments)
-  -- hPutStrLn stderr (show goo)
-  -- hPutStrLn stderr (show $ helperTemplate arguments)
-  runM arguments cpuConfig (runCpu cref) refreshRate cb
+  pureConfig <- computeTemplate arguments cpuConfig
+  pure (cref, pureConfig, arguments)
+
+startCpu :: Int -> (CpuDataRef, PureConfig, [String]) -> (String -> IO ()) -> IO ()
+startCpu refreshRate (ref, config, args) cb = doEveryTenthSeconds refreshRate (runCpu ref args config >>= cb)
+

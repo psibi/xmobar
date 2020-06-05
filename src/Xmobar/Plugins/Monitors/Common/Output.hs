@@ -1,3 +1,5 @@
+{-#LANGUAGE RecordWildCards#-}
+
 ------------------------------------------------------------------------------
 -- |
 -- Module: Xmobar.Plugins.Monitors.Strings
@@ -37,6 +39,8 @@ module Xmobar.Plugins.Monitors.Common.Output ( IconPattern
                                              , parseFloat
                                              , parseInt
                                              , stringParser
+                                             , pShowPercentWithColors
+                                             , pShowPercentsWithColors
                                              ) where
 
 import Data.Char
@@ -44,7 +48,7 @@ import Data.List (intercalate, sort)
 import qualified Data.ByteString.Lazy.Char8 as B
 import Numeric
 import Control.Monad (zipWithM)
-
+import Control.Monad.IO.Class (MonadIO(..))
 import Xmobar.Plugins.Monitors.Common.Types
 
 type IconPattern = Int -> String
@@ -109,6 +113,15 @@ floatToPercent n =
          ps = if up then "%" else ""
      return $ padString pad pad pc pr "" p ++ ps
 
+pFloatToPercent :: PureConfig -> Float -> String
+pFloatToPercent PureConfig{..} n = let pad = pPpad
+                                       pc = pPadChars
+                                       pr = pPadRight
+                                       up = pUseSuffix
+                                       p = showDigits 0 (n * 100)
+                                       ps = if up then "%" else ""
+                                   in padString pad pad pc pr "" p ++ ps
+
 stringParser :: Pos -> B.ByteString -> String
 stringParser (x,y) =
      B.unpack . li x . B.words . li y . B.lines
@@ -132,6 +145,14 @@ showWithPadding s =
        ellipsis <- getConfigValue maxWidthEllipsis
        return $ padString mn mx p pr ellipsis s
 
+pShowWithPadding :: PureConfig -> String -> String
+pShowWithPadding PureConfig{..} s = let mn = pMinWidth
+                                        mx = pMaxWidth
+                                        p = pPadChars
+                                        pr = pPadRight
+                                        ellipsis = pMaxWidthEllipsis
+                                    in padString mn mx p pr ellipsis s
+
 colorizeString :: (Num a, Ord a) => a -> String -> Monitor String
 colorizeString x s = do
     h <- getConfigValue high
@@ -142,8 +163,30 @@ colorizeString x s = do
            [col normalColor | x > ll ] ++
            [col lowColor    | True]
 
+pSetColor :: PureConfig -> String -> PSelector (Maybe String) -> String
+pSetColor config str s =
+    do let a = getPConfigValue config s
+       case a of
+            Nothing -> str
+            Just c -> "<fc=" ++ c ++ ">" ++ str ++ "</fc>"
+
+pColorizeString :: (Num a, Ord a, MonadIO m) => PureConfig -> a -> String -> m String
+pColorizeString p x s = do
+    let h = pHigh p
+        l = pLow p
+    let col = pSetColor p s
+        [ll,hh] = map fromIntegral $ sort [l, h] -- consider high < low
+    pure $ head $ [col pHighColor   | x > hh ] ++
+                  [col pNormalColor | x > ll ] ++
+                  [col pLowColor    | True]
+
 showWithColors :: (Num a, Ord a) => (a -> String) -> a -> Monitor String
 showWithColors f x = showWithPadding (f x) >>= colorizeString x
+
+pShowWithColors :: (Num a, Ord a, MonadIO m) => PureConfig -> (a -> String) -> a -> m String
+pShowWithColors p f x = do
+  let str = pShowWithPadding p (f x)
+  pColorizeString p x str
 
 showWithColors' :: (Num a, Ord a) => String -> a -> Monitor String
 showWithColors' str = showWithColors (const str)
@@ -153,8 +196,17 @@ showPercentsWithColors fs =
   do fstrs <- mapM floatToPercent fs
      zipWithM (showWithColors . const) fstrs (map (*100) fs)
 
+pShowPercentsWithColors :: (MonadIO m) => PureConfig -> [Float] -> m [String]
+pShowPercentsWithColors p fs =
+  do let fstrs = map (pFloatToPercent p) fs
+         temp = map (*100) fs
+     zipWithM (pShowWithColors p . const) fstrs temp
+
 showPercentWithColors :: Float -> Monitor String
 showPercentWithColors f = fmap head $ showPercentsWithColors [f]
+
+pShowPercentWithColors :: (MonadIO m) => PureConfig -> Float -> m String
+pShowPercentWithColors p f = fmap head $ pShowPercentsWithColors p [f]
 
 showPercentBar :: Float -> Float -> Monitor String
 showPercentBar v x = do
@@ -163,6 +215,15 @@ showPercentBar v x = do
   bw <- getConfigValue barWidth
   let len = min bw $ round (fromIntegral bw * x)
   s <- colorizeString v (take len $ cycle bf)
+  return $ s ++ take (bw - len) (cycle bb)
+
+pShowPercentBar :: (MonadIO m) => PureConfig -> Float -> Float -> m String
+pShowPercentBar p@PureConfig{..} v x = do
+  let bb = pBarBack
+      bf = pBarFore
+      bw = pBarWidth
+  let len = min bw $ round (fromIntegral bw * x)
+  s <- pColorizeString p v (take len $ cycle bf)
   return $ s ++ take (bw - len) (cycle bb)
 
 showIconPattern :: Maybe IconPattern -> Float -> Monitor String

@@ -1,3 +1,4 @@
+{-#LANGUAGE RecordWildCards#-}
 ------------------------------------------------------------------------------
 -- |
 -- Module: Xmobar.Plugins.Monitors.Parsers
@@ -26,6 +27,8 @@ module Xmobar.Plugins.Monitors.Common.Parsers ( runP
                                               , parseTemplate'
                                               , parseOptsWith
                                               , templateParser
+                                              , minParseTemplate'
+                                              , minParseTemplate
                                               ) where
 
 import Xmobar.Plugins.Monitors.Common.Types
@@ -140,6 +143,30 @@ parseTemplate l =
        -- io $ hPutStrLn stderr "parseTemplate"
        return $ if n > 0 then s' else s' ++ ell
 
+minParseTemplate :: PureConfig -> [String] -> IO String
+minParseTemplate PureConfig{..} l =
+    do let t = pTemplate
+           e = pExport
+           w = pMaxTotalWidth
+           ell = pMaxTotalWidthEllipsis
+       let m = Map.fromList . zip e $ l
+       s <- minParseTemplate' t m
+       let (n, s') = if w > 0 && length s > w
+                     then trimTo (w - length ell) "" s
+                     else (1, s)
+       -- io $ hPutStrLn stderr (show e)
+       -- io $ hPutStrLn stderr (show t)
+       -- io $ hPutStrLn stderr "parseTemplate"
+       return $ if n > 0 then s' else s' ++ ell
+
+minParseTemplate' :: String -> Map.Map String String -> IO String
+minParseTemplate' t m =
+    do s <- runP templateParser t
+       -- io $ hPutStrLn stderr (show s)
+       -- io $ hPutStrLn stderr ("parseToo")
+       minCombine m s
+
+
 -- | Parses the template given to it with a map of export values and combines
 -- them
 parseTemplate' :: String -> Map.Map String String -> Monitor String
@@ -159,6 +186,15 @@ combine m ((s,ts,ss):xs) =
          Nothing -> return $ "<" ++ ts ++ ">"
          Just  r -> let f "" = r; f n = n; in f <$> parseTemplate' r m
        return $ s ++ str ++ ss ++ next
+
+minCombine :: Map.Map String String -> [(String, String, String)] -> IO String
+minCombine _ [] = return []
+minCombine m ((s,ts,ss):xs) =
+    do next <- minCombine m xs
+       str <- case Map.lookup ts m of
+         Nothing -> return $ "<" ++ ts ++ ">"
+         Just  r -> let f "" = r; f n = n; in f <$> minParseTemplate' r m
+       pure $ s ++ str ++ ss ++ next
 
 -- | Try to parse arguments from the config file and apply them to Options.
 parseOptsWith
