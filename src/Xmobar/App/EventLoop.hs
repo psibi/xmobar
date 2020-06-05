@@ -149,6 +149,7 @@ checker tvar ov vs signal pauser = do
       atomically $ putTMVar signal Wakeup
       checker tvar nval vs signal pauser
     where
+      concatV :: [(a, TVar [b])] -> STM [b]
       concatV = fmap concat . mapM (readTVar . snd)
 
 
