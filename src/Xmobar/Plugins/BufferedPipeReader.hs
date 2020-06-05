@@ -16,6 +16,7 @@ module Xmobar.Plugins.BufferedPipeReader(BufferedPipeReader(..)) where
 
 import Control.Monad(forM_, when, void)
 import Control.Concurrent
+import Control.Concurrent.Async (withAsync, wait)
 import Control.Concurrent.STM
 import System.IO
 import System.IO.Unsafe(unsafePerformIO)
@@ -35,7 +36,9 @@ instance Exec BufferedPipeReader where
     alias      ( BufferedPipeReader a _  )    = a
 
     trigger br@( BufferedPipeReader _ _  ) sh =
-        takeMVar signal >>= sh . Just >> trigger br sh
+        let action = newTrigger br sh
+            newTrigger br2 sh2 = takeMVar signal >>= sh2 . Just >> newTrigger br2 sh2
+        in withAsync action wait
 
     start      ( BufferedPipeReader _ ps ) cb = do
 

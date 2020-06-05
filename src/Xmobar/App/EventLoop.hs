@@ -245,9 +245,8 @@ startCommand sig (com,s,ss)
     | otherwise = do var <- atomically $ newTVar is
                      let cb str = atomically $ writeTVar var (s ++ str ++ ss)
                      a1 <- async $ start com cb
-                     a2 <- async $ trigger com $ maybe (return ())
-                                                 (atomically . putTMVar sig)
-                     return ([a1, a2], var)
+                     trigger com $ maybe (return ()) (atomically . putTMVar sig)
+                     return ([a1], var)
     where is = s ++ "Updating..." ++ ss
 
 updateString :: Config -> TVar [String]
