@@ -84,7 +84,9 @@ runCpu cref argv p =
        l <- formatCpu opts cpuValue p
        -- io $ hPutStrLn stderr (show cpuValue)
        -- io $ hPutStrLn stderr (show l)
-       minParseTemplate p l
+       str <- minParseTemplate p l
+       hPutStrLn stderr (show str)
+       pure str
 
 -- getTemplate :: Monitor [String]
 -- getTemplate = do
