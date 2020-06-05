@@ -159,7 +159,9 @@ instance Exec Monitors where
 #endif
     start (Network i a r) = startNet i a r
     start (DynNetwork a r) = startDynNet a r
-    start (Cpu a r) = \cb -> getArguments a >>= \args -> startCpu r args cb
+    start (Cpu a r) = \cb -> do
+                        putStrLn "cpu start"
+                        getArguments a >>= \args -> startCpu r args cb
     start (MultiCpu a r) = startMultiCpu a r
     start (TopProc a r) = startTop a r
     start (TopMem a r) = runM a topMemConfig runTopMem r

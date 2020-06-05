@@ -78,7 +78,8 @@ formatCpu opts xs p = do
 
 runCpu :: CpuDataRef -> [String] -> PureConfig -> IO String
 runCpu cref argv p =
-    do cpuValue <- parseCpu cref
+    do hPutStrLn stderr "Inside run cpu"
+       cpuValue <- parseCpu cref
        -- t <- getConfigValue template
        opts <- parseOptsWith options defaultOpts argv
        l <- formatCpu opts cpuValue p
