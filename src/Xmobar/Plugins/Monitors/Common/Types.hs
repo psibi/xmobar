@@ -67,25 +67,25 @@ getPureConfig :: MConfig -> IO PureConfig
 getPureConfig MC{..} = do
   pNormalColor <- readIORef normalColor
   pLow <- readIORef low
-  pLowColor <- readIORef undefined
-  pHigh <- readIORef undefined
-  pHighColor <- readIORef undefined
-  pTemplate <- readIORef undefined
-  pExport <- readIORef undefined
-  pPpad <- readIORef undefined
-  pDecDigits <- readIORef undefined
-  pMinWidth <- readIORef undefined
-  pMaxWidth <- readIORef undefined
-  pMaxWidthEllipsis <- readIORef undefined
-  pPadChars <- readIORef undefined
-  pPadRight <- readIORef undefined
-  pBarBack <- readIORef undefined
-  pBarFore <- readIORef undefined
-  pBarWidth <- readIORef undefined
-  pUseSuffix <- readIORef undefined
-  pNaString <- readIORef undefined
-  pMaxTotalWidth <- readIORef undefined
-  pMaxTotalWidthEllipsis <- readIORef undefined
+  pLowColor <- readIORef lowColor
+  pHigh <- readIORef high
+  pHighColor <- readIORef highColor
+  pTemplate <- readIORef template
+  pExport <- readIORef export
+  pPpad <- readIORef ppad
+  pDecDigits <- readIORef decDigits
+  pMinWidth <- readIORef minWidth
+  pMaxWidth <- readIORef maxWidth
+  pMaxWidthEllipsis <- readIORef maxWidthEllipsis
+  pPadChars <- readIORef padChars
+  pPadRight <- readIORef padRight
+  pBarBack <- readIORef barBack
+  pBarFore <- readIORef barFore
+  pBarWidth <- readIORef barWidth
+  pUseSuffix <- readIORef useSuffix 
+  pNaString <- readIORef naString
+  pMaxTotalWidth <- readIORef maxTotalWidth
+  pMaxTotalWidthEllipsis <- readIORef maxTotalWidthEllipsis
   pure $ PureConfig {..}
 
 data PureConfig =
