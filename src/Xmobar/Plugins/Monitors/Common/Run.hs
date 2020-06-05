@@ -29,7 +29,7 @@ import Control.Exception (SomeException,handle)
 import Data.List
 import Control.Monad.Reader
 import System.Console.GetOpt
-
+import System.IO
 import Xmobar.Plugins.Monitors.Common.Types
 import Xmobar.Run.Exec (doEveryTenthSeconds)
 
@@ -170,7 +170,9 @@ getMConfig args mconfig = do
 
 computeTemplate :: [String] -> IO MConfig -> IO PureConfig
 computeTemplate args mconfig = do
+  hPutStrLn stderr "computeTemplate"
   newConfig <- getMConfig args mconfig
+  hPutStrLn stderr "computeTemplate 2"
   getPureConfig newConfig
 
 -- -runMLD args conf action looper detect cb = handle (cb . showException) loop
