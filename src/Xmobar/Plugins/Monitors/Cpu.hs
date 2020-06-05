@@ -78,19 +78,18 @@ formatCpu opts xs p = do
 
 runCpu :: CpuDataRef -> [String] -> PureConfig -> IO String
 runCpu cref argv p =
-    do hPutStrLn stderr "Inside run cpu"
-       cpuValue <- parseCpu cref
-       hPutStrLn stderr "Inside run cpu2"
+    do cpuValue <- parseCpu cref
+       -- hPutStrLn stderr "Inside run cpu2"
        -- t <- getConfigValue template
        -- opts <- parseOptsWith options defaultOpts argv
-       hPutStrLn stderr "Inside run cpu3"
+       -- hPutStrLn stderr "Inside run cpu3"
        l <- formatCpu defaultOpts cpuValue p -- todo fix me
-       hPutStrLn stderr "Inside run cpu4"
+       -- hPutStrLn stderr "Inside run cpu4"
        -- io $ hPutStrLn stderr (show cpuValue)
        -- io $ hPutStrLn stderr (show l)
        str <- minParseTemplate p l
-       hPutStrLn stderr "Inside run cpu5"
-       hPutStrLn stderr (show str)
+       -- hPutStrLn stderr "Inside run cpu5"
+       -- hPutStrLn stderr (show str)
        pure str
 
 -- getTemplate :: Monitor [String]
@@ -114,9 +113,9 @@ runCpu cref argv p =
 getArguments :: [String] -> IO (CpuDataRef, PureConfig, [String])
 getArguments arguments = do
   cref <- newIORef []
-  hPutStrLn stderr "getARgumens"
+  -- hPutStrLn stderr "getARgumens"
   pureConfig <- computeTemplate arguments cpuConfig
-  hPutStrLn stderr "getARgumens 2"
+  -- hPutStrLn stderr "getARgumens 2"
   pure (cref, pureConfig, arguments)
 
 startCpu :: Int -> (CpuDataRef, PureConfig, [String]) -> (String -> IO ()) -> IO ()

@@ -170,9 +170,9 @@ getMConfig args mconfig = do
 
 computeTemplate :: [String] -> IO MConfig -> IO PureConfig
 computeTemplate args mconfig = do
-  hPutStrLn stderr "computeTemplate"
+  -- hPutStrLn stderr "computeTemplate"
   newConfig <- getMConfig args mconfig
-  hPutStrLn stderr "computeTemplate 2"
+  -- hPutStrLn stderr "computeTemplate 2"
   getPureConfig newConfig
 
 -- -runMLD args conf action looper detect cb = handle (cb . showException) loop
