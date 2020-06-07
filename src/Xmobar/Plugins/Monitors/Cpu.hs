@@ -76,8 +76,8 @@ formatCpu opts xs p = do
   ps <- pShowPercentsWithColors p [t]
   return $ replicate 8 (head ps)
 
-runCpu :: CpuDataRef -> [String] -> PureConfig -> IO String
-runCpu cref argv p =
+runCpu :: CpuDataRef -> [String] -> PureConfig -> [(String, String, String)] -> [(String, [(String, String,String)])] -> IO String
+runCpu cref argv p s dd =
     do cpuValue <- parseCpu cref
        -- hPutStrLn stderr "Inside run cpu2"
        -- t <- getConfigValue template
@@ -87,7 +87,7 @@ runCpu cref argv p =
        -- hPutStrLn stderr "Inside run cpu4"
        -- io $ hPutStrLn stderr (show cpuValue)
        -- io $ hPutStrLn stderr (show l)
-       str <- minParseTemplate p l
+       str <- minParseTemplate p l s dd
        -- hPutStrLn stderr "Inside run cpu5"
        -- hPutStrLn stderr (show str)
        pure str
@@ -110,14 +110,16 @@ runCpu cref argv p =
 -- helperTemplate arguments = case getOpt Permute [] arguments of
 --                              (_,n,_) -> n
 
-getArguments :: [String] -> IO (CpuDataRef, PureConfig, [String])
+getArguments :: [String] -> IO (CpuDataRef, PureConfig, [String], [(String, String, String)], [(String, [(String, String,String)])])
 getArguments arguments = do
   cref <- newIORef []
   -- hPutStrLn stderr "getARgumens"
   pureConfig <- computeTemplate arguments cpuConfig
+  s <- helperTemp pureConfig
+  dd <- runExportTemplate (pExport pureConfig)
   -- hPutStrLn stderr "getARgumens 2"
-  pure (cref, pureConfig, arguments)
+  pure (cref, pureConfig, arguments, s, dd)
 
-startCpu :: Int -> (CpuDataRef, PureConfig, [String]) -> (String -> IO ()) -> IO ()
-startCpu refreshRate (ref, config, args) cb = doEveryTenthSeconds refreshRate (runCpu ref args config >>= cb)
+startCpu :: Int -> (CpuDataRef, PureConfig, [String], [(String, String, String)], [(String, [(String, String,String)])]) -> (String -> IO ()) -> IO ()
+startCpu refreshRate (ref, config, args, s, dd) cb = doEveryTenthSeconds refreshRate (runCpu ref args config s dd >>= cb)
 

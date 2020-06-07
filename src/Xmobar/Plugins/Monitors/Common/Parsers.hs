@@ -1,4 +1,5 @@
 {-#LANGUAGE RecordWildCards#-}
+{-#LANGUAGE ScopedTypeVariables#-}
 ------------------------------------------------------------------------------
 -- |
 -- Module: Xmobar.Plugins.Monitors.Parsers
@@ -27,7 +28,8 @@ module Xmobar.Plugins.Monitors.Common.Parsers ( runP
                                               , parseTemplate'
                                               , parseOptsWith
                                               , templateParser
-                                              , minParseTemplate'
+                                              , helperTemp
+                                              , runExportTemplate
                                               , minParseTemplate
                                               ) where
 
@@ -143,14 +145,15 @@ parseTemplate l =
        -- io $ hPutStrLn stderr "parseTemplate"
        return $ if n > 0 then s' else s' ++ ell
 
-minParseTemplate :: PureConfig -> [String] -> IO String
-minParseTemplate PureConfig{..} l =
+minParseTemplate :: PureConfig -> [String] -> [(String, String, String)] -> [(String, [(String, String,String)])] -> IO String
+minParseTemplate PureConfig{..} l s1 exp =
     do let t = pTemplate
            e = pExport
            w = pMaxTotalWidth
            ell = pMaxTotalWidthEllipsis
-       let m = Map.fromList . zip e $ l
-       s <- minParseTemplate' t m
+       let m = let expSnds :: [([(String, String, String)], String)]  = zip (map snd exp) l
+               in Map.fromList . zip (map fst exp) $ expSnds
+       s <- minCombine m s1
        let (n, s') = if w > 0 && length s > w
                      then trimTo (w - length ell) "" s
                      else (1, s)
@@ -159,13 +162,22 @@ minParseTemplate PureConfig{..} l =
        -- io $ hPutStrLn stderr "parseTemplate"
        return $ if n > 0 then s' else s' ++ ell
 
-minParseTemplate' :: String -> Map.Map String String -> IO String
-minParseTemplate' t m =
-    do s <- runP templateParser t
-       -- io $ hPutStrLn stderr (show s)
-       -- io $ hPutStrLn stderr ("parseToo")
-       minCombine m s
+helperTemp :: PureConfig -> IO [(String, String, String)]
+helperTemp PureConfig{..} = runP templateParser pTemplate
 
+runExportTemplate :: [String] -> IO [(String, [(String, String,String)])]
+runExportTemplate [] = pure []
+runExportTemplate (x:xs) = do
+  s <- runP templateParser x
+  rem <- runExportTemplate xs
+  pure $ (x,s):rem
+
+-- minParseTemplate' :: String -> Map.Map String String -> IO String
+-- minParseTemplate' t m =
+--     do s <- runP templateParser t
+--        -- io $ hPutStrLn stderr (show s)
+--        -- io $ hPutStrLn stderr ("parseToo")
+--        minCombine m s
 
 -- | Parses the template given to it with a map of export values and combines
 -- them
@@ -187,13 +199,13 @@ combine m ((s,ts,ss):xs) =
          Just  r -> let f "" = r; f n = n; in f <$> parseTemplate' r m
        return $ s ++ str ++ ss ++ next
 
-minCombine :: Map.Map String String -> [(String, String, String)] -> IO String
+minCombine :: Map.Map String ([(String, String, String)], String) -> [(String, String, String)] -> IO String
 minCombine _ [] = return []
 minCombine m ((s,ts,ss):xs) =
     do next <- minCombine m xs
        str <- case Map.lookup ts m of
          Nothing -> return $ "<" ++ ts ++ ">"
-         Just  r -> let f "" = r; f n = n; in f <$> minParseTemplate' r m
+         Just (s,r) -> let f "" = r; f n = n; in f <$> minCombine m s
        pure $ s ++ str ++ ss ++ next
 
 -- | Try to parse arguments from the config file and apply them to Options.
