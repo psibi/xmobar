@@ -119,7 +119,8 @@ printString d p (Utf8 fs) gc fc bc x y _ _ s a =
       liftIO $ wcDrawImageString d p fs gc x y s
 
 #ifdef XFT
-printString dpy drw fs@(Xft fonts) _ fc bc x y ay ht s al =
+printString dpy drw fs@(Xft fonts) _ fc bc x y ay ht s al = do
+  print $ "xmobar: printDebug " <> s
   withDrawingColors dpy drw fc bc $ \draw fc' bc' -> do
     when (al == 255) $ do
       (a,d)  <- textExtents fs s
