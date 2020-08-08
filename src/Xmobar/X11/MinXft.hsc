@@ -104,7 +104,7 @@ foreign import ccall "XftTextExtentsUtf8"
 
 xftTxtExtents :: Display -> AXftFont -> String -> IO XGlyphInfo
 xftTxtExtents d f string =
-    withArrayLen (map fi (UTF8.encode string)) $
+    withArrayLen (map (fi . ord) string) $
     \len str_ptr -> alloca $
     \cglyph -> do
       cXftTextExtentsUtf8 d f str_ptr (fi len) cglyph
