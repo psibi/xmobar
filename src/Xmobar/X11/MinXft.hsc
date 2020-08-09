@@ -109,7 +109,7 @@ utf8EncodeString str = if UTF8.isUTF8Encoded str
 
 xftTxtExtents :: Display -> AXftFont -> String -> IO XGlyphInfo
 xftTxtExtents d f string =
-    withArrayLen (utf8EncodeString string) $
+    withArrayLen (map (fi . ord) string) $
     \len str_ptr -> alloca $
     \cglyph -> do
       cXftTextExtentsUtf8 d f str_ptr (fi len) cglyph
@@ -169,7 +169,7 @@ foreign import ccall "XftDrawStringUtf8"
 drawXftString :: (Integral a1, Integral a) =>
                  AXftDraw -> AXftColor -> AXftFont -> a -> a1 -> String -> IO ()
 drawXftString d c f x y string =
-    withArrayLen (map (fi . ord) string)
+    withArrayLen (utf8EncodeString string) $
       (\len ptr -> cXftDrawStringUtf8 d c f (fi x) (fi y) ptr (fi len))
 
 drawXftString' :: AXftDraw ->
