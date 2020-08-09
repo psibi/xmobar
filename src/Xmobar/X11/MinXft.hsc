@@ -102,9 +102,14 @@ xft_height' = (fmap maximum) . (mapM xft_height)
 foreign import ccall "XftTextExtentsUtf8"
   cXftTextExtentsUtf8 :: Display -> AXftFont -> CString -> CInt -> Ptr XGlyphInfo -> IO ()
 
+utf8EncodeString :: Num b => String -> [b]
+utf8EncodeString str = if UTF8.isUTF8Encoded str
+                       then map (fi . ord) str
+                       else map fi (UTF8.encode str)
+
 xftTxtExtents :: Display -> AXftFont -> String -> IO XGlyphInfo
 xftTxtExtents d f string =
-    withArrayLen (map (fi . ord) string) $
+    withArrayLen (utf8EncodeString string) $
     \len str_ptr -> alloca $
     \cglyph -> do
       cXftTextExtentsUtf8 d f str_ptr (fi len) cglyph
