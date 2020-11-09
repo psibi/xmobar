@@ -33,11 +33,6 @@ data Date = Date String String Int
 instance Exec Date where
     alias (Date _ a _) = a
     alias (DateWithTimeZone _ a _) = a
-    run   (Date f _ _) = date f
-    run   (DateWithTimeZone f _ _) = do
-                     t <- getCurrentTime
-                     zone <- getTimeZone t
-                     dateWithTimeZone zone f
     rate  (Date _ _ r) = r
     rate  (DateWithTimeZone _ _ r) = r
     start (Date f _ r) cb = doEveryTenthSeconds r $ date f >>= cb
