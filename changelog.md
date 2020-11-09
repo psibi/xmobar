@@ -3,6 +3,8 @@
 _New features_
 
   - New command line option `--add-font` (Ivan Brennan)
+  - Add new `DateWithTimeZone` monitor which is around 45% faster than
+    the Date monitor.
 
 _Bug fixes_
 

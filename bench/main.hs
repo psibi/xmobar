@@ -36,7 +36,7 @@ main = do
   defaultMain $ normalBench benchInput
   where
     normalBench args =
-      [ -- bgroup "Cpu Benchmarks" $ normalCpuBench (cpuInput args)
+      [ bgroup "Cpu Benchmarks" $ normalCpuBench (cpuInput args),
         bgroup "Date Benchmarks" $ dateBench (dateInput args)
       ]
 
