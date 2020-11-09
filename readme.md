@@ -1548,11 +1548,11 @@ will display "N/A" if for some reason the `date` invocation fails.
 - Accepts same input as the above `Date` monitor.
 - Sample usage: `Run DateWithTimeZone "%a %b %_d %Y <fc=#ee9a00>%H:%M:%S</fc>" "date" 10`
 - The difference with the `Date` monitor is that it's better optimized
-  and 45% faster than the it. It computes the initial time zone
-  information at the start of the xmobar program and reuses it for the
-  subsequent invocations. That means this monitor isn't suited if you
-  are travelling among different time zones, have DST etc unless you
-  are ready to restart xmobar.
+  and 45% faster. It computes the initial time zone information at the
+  start of the xmobar program and reuses it for the subsequent
+  invocations. That means this monitor isn't suited if you are
+  travelling among different time zones, have DST etc unless you are
+  ready to restart xmobar.
 
 ## `DateZone Format Locale Zone Alias RefreshRate`
 
