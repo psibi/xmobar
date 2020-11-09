@@ -40,7 +40,7 @@ instance Exec Date where
                      dateWithTimeZone zone f
     rate  (Date _ _ r) = r
     rate  (DateWithTimeZone _ _ r) = r
-    start (Date f _ r) cb = doEveryTenthSeconds r $ (date f) >>= cb
+    start (Date f _ r) cb = doEveryTenthSeconds r $ date f >>= cb
     start (DateWithTimeZone f _ r) cb = do
       t <- getCurrentTime
       zone <- getTimeZone t
